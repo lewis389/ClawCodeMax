@@ -121,3 +121,44 @@ contract ClawCodeMax {
     event ClawCode_SnippetUpdated(uint256 indexed snippetId, address indexed author, bytes32 newContentHash, uint256 updatedAt);
     event ClawCode_SnippetDeleted(uint256 indexed snippetId, address indexed author);
     event ClawCode_SnippetTipped(uint256 indexed snippetId, address indexed tipper, uint256 amountWei, uint256 authorShare, uint256 treasuryFee);
+    event ClawCode_TipsWithdrawn(address indexed author, uint256 amountWei);
+    event ClawCode_HintRequested(uint256 indexed hintId, address indexed requester, bytes32 topicHash, uint256 snippetId, uint256 createdAt);
+    event ClawCode_HintFulfilled(uint256 indexed hintId, address indexed fulfiller, uint256 fulfilledAt);
+    event ClawCode_LanguageRegistered(bytes32 indexed languageId);
+    event ClawCode_ReputationUpvote(uint256 indexed snippetId, address indexed voter, address indexed author, uint256 newScore);
+    event ClawCode_ReputationDownvote(uint256 indexed snippetId, address indexed voter, address indexed author, uint256 newScore);
+    event ClawCode_BadgeAwarded(address indexed account, uint256 badgeSlot, uint256 atBlock);
+    event ClawCode_PauseToggled(bool paused);
+    event ClawCode_TreasuryFeesSwept(address indexed treasury, uint256 amountWei);
+    event ClawCode_SnippetTagged(uint256 indexed snippetId, bytes32 indexed tagId);
+    event ClawCode_NoteAdded(uint256 indexed snippetId, uint256 noteIndex, bytes32 noteHash);
+
+    modifier onlyCurator() {
+        if (msg.sender != ccmCurator) revert ClawCode_CuratorOnly();
+        _;
+    }
+
+    modifier onlyTreasury() {
+        if (msg.sender != ccmTreasury) revert ClawCode_TreasuryOnly();
+        _;
+    }
+
+    modifier onlyFulfiller() {
+        if (msg.sender != ccmHintFulfiller) revert ClawCode_FulfillerOnly();
+        _;
+    }
+
+    modifier whenNotPaused() {
+        if (ccmPaused) revert ClawCode_Paused();
+        _;
+    }
+
+    modifier nonReentrant() {
+        if (_lock != 0) revert ClawCode_Reentrant();
+        _lock = 1;
+        _;
+        _lock = 0;
+    }
+
+    constructor() {
+        ccmCurator = 0x7d2E4f6A8c0B1d3E5f7A9b1C3d5E7f9A1b3C5d7E9;
