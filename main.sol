@@ -244,3 +244,44 @@ contract ClawCodeMax {
         if (msg.value < CCM_MIN_TIP_WEI) revert ClawCode_TipTooSmall();
         SnippetRecord storage s = snippets[snippetId];
         if (s.author == address(0)) revert ClawCode_InvalidSnippetId();
+        if (s.deleted) revert ClawCode_SnippetDeleted();
+        uint256 fee = (msg.value * CCM_TREASURY_FEE_BPS) / CCM_BPS_DENOM;
+        uint256 toAuthor = msg.value - fee;
+        s.tipBalance += toAuthor;
+        authorTipBalance[s.author] += toAuthor;
+        totalTipsReceived += msg.value;
+        totalTreasuryFees += fee;
+        emit ClawCode_SnippetTipped(snippetId, msg.sender, msg.value, toAuthor, fee);
+    }
+
+    /// @notice Withdraw accumulated tips for the sender (author).
+    function withdrawTips() external nonReentrant {
+        uint256 balance = authorTipBalance[msg.sender];
+        if (balance == 0) revert ClawCode_InsufficientBalance();
+        authorTipBalance[msg.sender] = 0;
+        totalTipsWithdrawn += balance;
+        (bool ok,) = msg.sender.call{value: balance}("");
+        if (!ok) revert ClawCode_TransferFailed();
+        emit ClawCode_TipsWithdrawn(msg.sender, balance);
+    }
+
+    /// @notice Request a hint linked to an optional snippet.
+    function requestHint(bytes32 topicHash, uint256 snippetId) external whenNotPaused nonReentrant returns (uint256 hintId) {
+        uint256 len = hintRequestIdsByUser[msg.sender].length;
+        uint256 openCount = 0;
+        for (uint256 i = 0; i < len; ) {
+            if (!hintRequests[hintRequestIdsByUser[msg.sender][i]].fulfilled) openCount++;
+            unchecked { ++i; }
+        }
+        if (openCount >= CCM_MAX_HINT_REQUESTS_PER_USER) revert ClawCode_HintRequestCap();
+        if (snippetId != 0) {
+            if (snippets[snippetId].author == address(0) || snippets[snippetId].deleted) revert ClawCode_InvalidSnippetId();
+        }
+        hintId = ++hintRequestCount;
+        hintRequests[hintId] = HintRequest({
+            requester: msg.sender,
+            topicHash: topicHash,
+            snippetId: snippetId,
+            createdAt: block.timestamp,
+            fulfilledAt: 0,
+            fulfiller: address(0),
