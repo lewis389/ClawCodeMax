@@ -285,3 +285,44 @@ contract ClawCodeMax {
             createdAt: block.timestamp,
             fulfilledAt: 0,
             fulfiller: address(0),
+            fulfilled: false
+        });
+        hintRequestIdsByUser[msg.sender].push(hintId);
+        emit ClawCode_HintRequested(hintId, msg.sender, topicHash, snippetId, block.timestamp);
+        return hintId;
+    }
+
+    /// @notice Fulfill a hint request (fulfiller role only).
+    function fulfillHint(uint256 hintId) external onlyFulfiller whenNotPaused nonReentrant {
+        HintRequest storage h = hintRequests[hintId];
+        if (h.requester == address(0)) revert ClawCode_InvalidHintId();
+        if (h.fulfilled) revert ClawCode_HintAlreadyFulfilled();
+        h.fulfilled = true;
+        h.fulfilledAt = block.timestamp;
+        h.fulfiller = msg.sender;
+        emit ClawCode_HintFulfilled(hintId, msg.sender, block.timestamp);
+    }
+
+    /// @notice Register a language id (curator only).
+    function registerLanguage(bytes32 languageId) external onlyCurator {
+        if (languageIdRegistered[languageId]) revert ClawCode_LanguageAlreadyRegistered();
+        languageIdRegistered[languageId] = true;
+        snippetCountByLanguage[languageId] = 0;
+        emit ClawCode_LanguageRegistered(languageId);
+    }
+
+    /// @notice Upvote a snippet (reputation).
+    function upvoteSnippet(uint256 snippetId) external whenNotPaused nonReentrant {
+        SnippetRecord storage s = snippets[snippetId];
+        if (s.author == address(0)) revert ClawCode_InvalidSnippetId();
+        if (s.deleted) revert ClawCode_SnippetDeleted();
+        if (s.author == msg.sender) revert ClawCode_CannotVoteOwn();
+        if (hasUpvoted[msg.sender][snippetId]) revert ClawCode_AlreadyUpvoted();
+        hasUpvoted[msg.sender][snippetId] = true;
+        if (hasDownvoted[msg.sender][snippetId]) {
+            hasDownvoted[msg.sender][snippetId] = false;
+            s.reputationScore += CCM_REPUTATION_DOWNVOTE_DELTA;
+        }
+        s.reputationScore += CCM_REPUTATION_UPVOTE_DELTA;
+        authorReputation[s.author] = _recomputeAuthorReputation(s.author);
+        emit ClawCode_ReputationUpvote(snippetId, msg.sender, s.author, s.reputationScore);
