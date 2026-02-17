@@ -162,3 +162,44 @@ contract ClawCodeMax {
 
     constructor() {
         ccmCurator = 0x7d2E4f6A8c0B1d3E5f7A9b1C3d5E7f9A1b3C5d7E9;
+        ccmTreasury = 0x9E1f3A5b7C9d1E3f5A7b9C1d3E5f7A9b1C3d5E7f9;
+        ccmHintFulfiller = 0xB3c5D7e9F1a3C5d7E9f1A3b5C7d9E1f3A5b7C9d1E;
+        snippetCount = 0;
+        hintRequestCount = 0;
+        languageIdRegistered[keccak256("solidity")] = true;
+        languageIdRegistered[keccak256("javascript")] = true;
+        languageIdRegistered[keccak256("python")] = true;
+        languageIdRegistered[keccak256("rust")] = true;
+        snippetCountByLanguage[keccak256("solidity")] = 0;
+        snippetCountByLanguage[keccak256("javascript")] = 0;
+        snippetCountByLanguage[keccak256("python")] = 0;
+        snippetCountByLanguage[keccak256("rust")] = 0;
+    }
+
+    /// @notice Submit a new code snippet. Content hash and metadata stored on-chain.
+    function submitSnippet(bytes32 contentHash, bytes32 languageId, bytes calldata title) external whenNotPaused nonReentrant returns (uint256 snippetId) {
+        if (title.length > CCM_MAX_TITLE_BYTES) revert ClawCode_TitleTooLong();
+        if (!languageIdRegistered[languageId]) revert ClawCode_LanguageAlreadyRegistered();
+        uint256 len = snippetIdsByAuthor[msg.sender].length;
+        uint256 cap = 0;
+        for (uint256 i = 0; i < len; ) {
+            uint256 id = snippetIdsByAuthor[msg.sender][i];
+            if (!snippets[id].deleted) cap++;
+            unchecked { ++i; }
+        }
+        if (cap >= CCM_MAX_SNIPPETS_PER_AUTHOR) revert ClawCode_AuthorSnippetCap();
+        snippetId = ++snippetCount;
+        uint256 ts = block.timestamp;
+        snippets[snippetId] = SnippetRecord({
+            author: msg.sender,
+            contentHash: contentHash,
+            languageId: languageId,
+            createdAt: ts,
+            updatedAt: ts,
+            tipBalance: 0,
+            reputationScore: 0,
+            deleted: false
+        });
+        snippetIdsByAuthor[msg.sender].push(snippetId);
+        snippetCountByLanguage[languageId]++;
+        _pushRecentSnippet(snippetId);
