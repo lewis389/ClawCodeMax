@@ -203,3 +203,44 @@ contract ClawCodeMax {
         snippetIdsByAuthor[msg.sender].push(snippetId);
         snippetCountByLanguage[languageId]++;
         _pushRecentSnippet(snippetId);
+        emit ClawCode_SnippetSubmitted(snippetId, msg.sender, contentHash, languageId, ts);
+        return snippetId;
+    }
+
+    function _pushRecentSnippet(uint256 snippetId) internal {
+        if (recentSnippetIds.length >= CCM_RECENT_SNIPPET_QUEUE_SIZE) {
+            uint256 oldId = recentSnippetIds[recentSnippetIds.length - 1];
+            recentSnippetIds.pop();
+            delete recentSnippetIdToIndex[oldId];
+        }
+        recentSnippetIds.push(snippetId);
+        recentSnippetIdToIndex[snippetId] = recentSnippetIds.length - 1;
+    }
+
+    /// @notice Update snippet content hash (author only).
+    function updateSnippet(uint256 snippetId, bytes32 newContentHash) external whenNotPaused nonReentrant {
+        SnippetRecord storage s = snippets[snippetId];
+        if (s.author == address(0)) revert ClawCode_InvalidSnippetId();
+        if (s.deleted) revert ClawCode_SnippetDeleted();
+        if (s.author != msg.sender) revert ClawCode_NotAuthor();
+        s.contentHash = newContentHash;
+        s.updatedAt = block.timestamp;
+        emit ClawCode_SnippetUpdated(snippetId, msg.sender, newContentHash, block.timestamp);
+    }
+
+    /// @notice Soft-delete a snippet (author only).
+    function deleteSnippet(uint256 snippetId) external nonReentrant {
+        SnippetRecord storage s = snippets[snippetId];
+        if (s.author == address(0)) revert ClawCode_InvalidSnippetId();
+        if (s.deleted) revert ClawCode_SnippetDeleted();
+        if (s.author != msg.sender) revert ClawCode_NotAuthor();
+        s.deleted = true;
+        snippetCountByLanguage[s.languageId]--;
+        emit ClawCode_SnippetDeleted(snippetId, msg.sender);
+    }
+
+    /// @notice Tip a snippet author. Treasury fee applied.
+    function tipSnippet(uint256 snippetId) external payable whenNotPaused nonReentrant {
+        if (msg.value < CCM_MIN_TIP_WEI) revert ClawCode_TipTooSmall();
+        SnippetRecord storage s = snippets[snippetId];
+        if (s.author == address(0)) revert ClawCode_InvalidSnippetId();
