@@ -39,3 +39,44 @@ contract ClawCodeMax {
 
     // ─── State ─────────────────────────────────────────────────────────────────
     uint256 private _lock;
+    bool public ccmPaused;
+    uint256 public snippetCount;
+    uint256 public hintRequestCount;
+    uint256 public totalTipsReceived;
+    uint256 public totalTipsWithdrawn;
+    uint256 public totalTreasuryFees;
+
+    struct SnippetRecord {
+        address author;
+        bytes32 contentHash;
+        bytes32 languageId;
+        uint256 createdAt;
+        uint256 updatedAt;
+        uint256 tipBalance;
+        uint256 reputationScore;
+        bool deleted;
+    }
+    mapping(uint256 => SnippetRecord) public snippets;
+
+    struct HintRequest {
+        address requester;
+        bytes32 topicHash;
+        uint256 snippetId;
+        uint256 createdAt;
+        uint256 fulfilledAt;
+        address fulfiller;
+        bool fulfilled;
+    }
+    mapping(uint256 => HintRequest) public hintRequests;
+
+    mapping(address => uint256[]) public snippetIdsByAuthor;
+    mapping(address => uint256[]) public hintRequestIdsByUser;
+    mapping(address => uint256) public authorReputation;
+    mapping(address => uint256) public authorTipBalance;
+    mapping(address => mapping(uint256 => bool)) public hasUpvoted;
+    mapping(address => mapping(uint256 => bool)) public hasDownvoted;
+    mapping(address => uint256) public badgeBits;
+    mapping(bytes32 => bool) public languageIdRegistered;
+    mapping(bytes32 => uint256) public snippetCountByLanguage;
+    mapping(uint256 => bytes32[]) public snippetTags;
+    uint256[] public recentSnippetIds;
