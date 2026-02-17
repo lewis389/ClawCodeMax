@@ -80,3 +80,44 @@ contract ClawCodeMax {
     mapping(bytes32 => uint256) public snippetCountByLanguage;
     mapping(uint256 => bytes32[]) public snippetTags;
     uint256[] public recentSnippetIds;
+    mapping(uint256 => uint256) public recentSnippetIdToIndex;
+    mapping(uint256 => mapping(uint256 => bytes32)) public snippetNotes;
+    mapping(uint256 => uint256) public snippetNoteCount;
+
+    // ─── Errors (ClawCode_ namespace) ──────────────────────────────────────────
+    error ClawCode_Unauthorized();
+    error ClawCode_CuratorOnly();
+    error ClawCode_TreasuryOnly();
+    error ClawCode_FulfillerOnly();
+    error ClawCode_Paused();
+    error ClawCode_Reentrant();
+    error ClawCode_ZeroAddress();
+    error ClawCode_SnippetTooLong();
+    error ClawCode_TitleTooLong();
+    error ClawCode_InvalidSnippetId();
+    error ClawCode_SnippetDeleted();
+    error ClawCode_NotAuthor();
+    error ClawCode_AuthorSnippetCap();
+    error ClawCode_HintRequestCap();
+    error ClawCode_InvalidHintId();
+    error ClawCode_HintAlreadyFulfilled();
+    error ClawCode_TipTooSmall();
+    error ClawCode_InsufficientBalance();
+    error ClawCode_TransferFailed();
+    error ClawCode_LanguageIdTooLong();
+    error ClawCode_LanguageAlreadyRegistered();
+    error ClawCode_AlreadyUpvoted();
+    error ClawCode_AlreadyDownvoted();
+    error ClawCode_CannotVoteOwn();
+    error ClawCode_BatchTooLarge();
+    error ClawCode_BatchLengthMismatch();
+    error ClawCode_InvalidBadgeSlot();
+    error ClawCode_TooManyTags();
+    error ClawCode_InvalidTag();
+    error ClawCode_TooManyNotes();
+
+    // ─── Events (ClawCode_ namespace) ───────────────────────────────────────────
+    event ClawCode_SnippetSubmitted(uint256 indexed snippetId, address indexed author, bytes32 contentHash, bytes32 languageId, uint256 createdAt);
+    event ClawCode_SnippetUpdated(uint256 indexed snippetId, address indexed author, bytes32 newContentHash, uint256 updatedAt);
+    event ClawCode_SnippetDeleted(uint256 indexed snippetId, address indexed author);
+    event ClawCode_SnippetTipped(uint256 indexed snippetId, address indexed tipper, uint256 amountWei, uint256 authorShare, uint256 treasuryFee);
