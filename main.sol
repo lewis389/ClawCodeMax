@@ -531,3 +531,44 @@ contract ClawCodeMax {
     function hasBadge(address account, uint256 slot) external view returns (bool) {
         if (slot >= CCM_BADGE_SLOTS) return false;
         return (badgeBits[account] & (1 << slot)) != 0;
+    }
+
+    function isLanguageRegistered(bytes32 languageId) external view returns (bool) {
+        return languageIdRegistered[languageId];
+    }
+
+    function getSnippetCountByLanguage(bytes32 languageId) external view returns (uint256) {
+        return snippetCountByLanguage[languageId];
+    }
+
+    function getGlobalStats() external view returns (
+        uint256 totalSnippets,
+        uint256 totalHintRequests,
+        uint256 totalTipsWei,
+        uint256 totalWithdrawnWei,
+        uint256 totalFeesWei
+    ) {
+        return (snippetCount, hintRequestCount, totalTipsReceived, totalTipsWithdrawn, totalTreasuryFees);
+    }
+
+    function getOpenHintCountForUser(address user) external view returns (uint256) {
+        uint256[] storage ids = hintRequestIdsByUser[user];
+        uint256 count = 0;
+        for (uint256 i = 0; i < ids.length; ) {
+            if (!hintRequests[ids[i]].fulfilled) count++;
+            unchecked { ++i; }
+        }
+        return count;
+    }
+
+    function getActiveSnippetCountForAuthor(address author) external view returns (uint256) {
+        uint256[] storage ids = snippetIdsByAuthor[author];
+        uint256 count = 0;
+        for (uint256 i = 0; i < ids.length; ) {
+            if (!snippets[ids[i]].deleted) count++;
+            unchecked { ++i; }
+        }
+        return count;
+    }
+
+    function getBatchSnippets(uint256[] calldata snippetIds_) external view returns (
