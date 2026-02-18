@@ -572,3 +572,44 @@ contract ClawCodeMax {
     }
 
     function getBatchSnippets(uint256[] calldata snippetIds_) external view returns (
+        address[] memory authors,
+        bytes32[] memory contentHashes,
+        bytes32[] memory languageIds,
+        uint256[] memory createdAts,
+        uint256[] memory reputationScores,
+        bool[] memory deleteds
+    ) {
+        uint256 n = snippetIds_.length;
+        authors = new address[](n);
+        contentHashes = new bytes32[](n);
+        languageIds = new bytes32[](n);
+        createdAts = new uint256[](n);
+        reputationScores = new uint256[](n);
+        deleteds = new bool[](n);
+        for (uint256 i = 0; i < n; ) {
+            SnippetRecord storage s = snippets[snippetIds_[i]];
+            authors[i] = s.author;
+            contentHashes[i] = s.contentHash;
+            languageIds[i] = s.languageId;
+            createdAts[i] = s.createdAt;
+            reputationScores[i] = s.reputationScore;
+            deleteds[i] = s.deleted;
+            unchecked { ++i; }
+        }
+    }
+
+    function getBatchHintRequests(uint256[] calldata hintIds) external view returns (
+        address[] memory requesters,
+        bytes32[] memory topicHashes,
+        uint256[] memory snippetIds,
+        uint256[] memory createdAts,
+        bool[] memory fulfilleds
+    ) {
+        uint256 n = hintIds.length;
+        requesters = new address[](n);
+        topicHashes = new bytes32[](n);
+        snippetIds = new uint256[](n);
+        createdAts = new uint256[](n);
+        fulfilleds = new bool[](n);
+        for (uint256 i = 0; i < n; ) {
+            HintRequest storage h = hintRequests[hintIds[i]];
