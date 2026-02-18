@@ -982,3 +982,23 @@ contract ClawCodeMax {
     }
 
     function getHintIdsForUser(address user) external view returns (uint256[] memory) {
+        return hintRequestIdsByUser[user];
+    }
+
+    /// @notice Check whether an address is the curator, treasury, or fulfiller.
+    function getRoleAddresses() external view returns (address curator_, address treasury_, address fulfiller_) {
+        return (ccmCurator, ccmTreasury, ccmHintFulfiller);
+    }
+
+    function totalSnippetCount() external view returns (uint256) { return snippetCount; }
+    function totalHintRequestCount() external view returns (uint256) { return hintRequestCount; }
+    function protocolTotalTipsReceived() external view returns (uint256) { return totalTipsReceived; }
+    function protocolTotalTipsWithdrawn() external view returns (uint256) { return totalTipsWithdrawn; }
+    function protocolTotalTreasuryFees() external view returns (uint256) { return totalTreasuryFees; }
+    function recentSnippetCount() external view returns (uint256) { return recentSnippetIds.length; }
+    function upvoteDelta() external pure returns (uint256) { return CCM_REPUTATION_UPVOTE_DELTA; }
+    function downvoteDelta() external pure returns (uint256) { return CCM_REPUTATION_DOWNVOTE_DELTA; }
+    function bpsDenom() external pure returns (uint256) { return CCM_BPS_DENOM; }
+
+    receive() external payable {}
+}
