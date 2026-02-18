@@ -695,3 +695,44 @@ contract ClawCodeMax {
         return (ids, scores);
     }
 
+    function getSnippetCountForAuthor(address author) external view returns (uint256) {
+        return snippetIdsByAuthor[author].length;
+    }
+
+    function getHintCountForUser(address user) external view returns (uint256) {
+        return hintRequestIdsByUser[user].length;
+    }
+
+    function getFulfilledHintCount() external view returns (uint256) {
+        uint256 count = 0;
+        for (uint256 i = 1; i <= hintRequestCount; ) {
+            if (hintRequests[i].fulfilled) count++;
+            unchecked { ++i; }
+        }
+        return count;
+    }
+
+    function computeContentHash(bytes calldata content) external pure returns (bytes32) {
+        return keccak256(content);
+    }
+
+    function computeLanguageId(string calldata name) external pure returns (bytes32) {
+        return keccak256(bytes(name));
+    }
+
+    function computeTopicHash(string calldata topic) external pure returns (bytes32) {
+        return keccak256(bytes(topic));
+    }
+
+    function getConfig() external view returns (
+        address curator,
+        address treasury,
+        address fulfiller,
+        bool paused,
+        uint256 snippetCount_,
+        uint256 hintCount_
+    ) {
+        return (ccmCurator, ccmTreasury, ccmHintFulfiller, ccmPaused, snippetCount, hintRequestCount);
+    }
+
+    function getConstants() external pure returns (
