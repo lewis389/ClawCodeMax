@@ -736,3 +736,44 @@ contract ClawCodeMax {
     }
 
     function getConstants() external pure returns (
+        uint256 maxSnippetBytes,
+        uint256 maxTitleBytes,
+        uint256 maxSnippetsPerAuthor,
+        uint256 minTipWei,
+        uint256 batchSubmitCap,
+        uint256 treasuryFeeBps
+    ) {
+        return (
+            CCM_MAX_SNIPPET_BYTES,
+            CCM_MAX_TITLE_BYTES,
+            CCM_MAX_SNIPPETS_PER_AUTHOR,
+            CCM_MIN_TIP_WEI,
+            CCM_BATCH_SUBMIT_CAP,
+            CCM_TREASURY_FEE_BPS
+        );
+    }
+
+    function getNotesForSnippet(uint256 snippetId) external view returns (bytes32[] memory) {
+        uint256 n = snippetNoteCount[snippetId];
+        bytes32[] memory out = new bytes32[](n);
+        for (uint256 i = 0; i < n; ) {
+            out[i] = snippetNotes[snippetId][i];
+            unchecked { ++i; }
+        }
+        return out;
+    }
+
+    function getSnippetFull(uint256 snippetId) external view returns (
+        address author,
+        bytes32 contentHash,
+        bytes32 languageId,
+        uint256 createdAt,
+        uint256 updatedAt,
+        uint256 tipBalance,
+        uint256 reputationScore,
+        bool deleted,
+        uint256 tagCount,
+        uint256 noteCount
+    ) {
+        SnippetRecord storage s = snippets[snippetId];
+        return (
