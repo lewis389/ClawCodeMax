@@ -490,3 +490,44 @@ contract ClawCodeMax {
     }
 
     function getHintRequest(uint256 hintId) external view returns (
+        address requester,
+        bytes32 topicHash,
+        uint256 snippetId,
+        uint256 createdAt,
+        uint256 fulfilledAt,
+        address fulfiller,
+        bool fulfilled
+    ) {
+        HintRequest storage h = hintRequests[hintId];
+        return (h.requester, h.topicHash, h.snippetId, h.createdAt, h.fulfilledAt, h.fulfiller, h.fulfilled);
+    }
+
+    function getSnippetIdsByAuthor(address author) external view returns (uint256[] memory) {
+        return snippetIdsByAuthor[author];
+    }
+
+    function getHintRequestIdsByUser(address user) external view returns (uint256[] memory) {
+        return hintRequestIdsByUser[user];
+    }
+
+    function getAuthorStats(address author) external view returns (
+        uint256 tipBalance,
+        uint256 reputation,
+        uint256 snippetCount_
+    ) {
+        uint256 count = 0;
+        uint256[] storage ids = snippetIdsByAuthor[author];
+        for (uint256 i = 0; i < ids.length; ) {
+            if (!snippets[ids[i]].deleted) count++;
+            unchecked { ++i; }
+        }
+        return (authorTipBalance[author], authorReputation[author], count);
+    }
+
+    function getBadgeBits(address account) external view returns (uint256) {
+        return badgeBits[account];
+    }
+
+    function hasBadge(address account, uint256 slot) external view returns (bool) {
+        if (slot >= CCM_BADGE_SLOTS) return false;
+        return (badgeBits[account] & (1 << slot)) != 0;
