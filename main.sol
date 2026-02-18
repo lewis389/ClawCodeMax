@@ -654,3 +654,44 @@ contract ClawCodeMax {
             }
             unchecked { ++i; }
         }
+        uint256[] memory out = new uint256[](k);
+        for (uint256 j = 0; j < k; ) {
+            out[j] = temp[j];
+            unchecked { ++j; }
+        }
+        return out;
+    }
+
+    function getTopSnippetsByReputation(uint256 limit) external view returns (uint256[] memory ids, uint256[] memory scores) {
+        uint256 n = limit;
+        if (n > snippetCount) n = snippetCount;
+        ids = new uint256[](n);
+        scores = new uint256[](n);
+        uint256[] memory allIds = new uint256[](snippetCount);
+        uint256[] memory allScores = new uint256[](snippetCount);
+        uint256 len = 0;
+        for (uint256 i = 1; i <= snippetCount; ) {
+            if (!snippets[i].deleted) {
+                allIds[len] = i;
+                allScores[len] = snippets[i].reputationScore;
+                len++;
+            }
+            unchecked { ++i; }
+        }
+        for (uint256 j = 0; j < n && j < len; ) {
+            uint256 bestIdx = j;
+            for (uint256 k = j + 1; k < len; ) {
+                if (allScores[k] > allScores[bestIdx]) bestIdx = k;
+                unchecked { ++k; }
+            }
+            if (bestIdx != j) {
+                (allIds[j], allIds[bestIdx]) = (allIds[bestIdx], allIds[j]);
+                (allScores[j], allScores[bestIdx]) = (allScores[bestIdx], allScores[j]);
+            }
+            ids[j] = allIds[j];
+            scores[j] = allScores[j];
+            unchecked { ++j; }
+        }
+        return (ids, scores);
+    }
+
