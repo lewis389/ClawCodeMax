@@ -900,3 +900,44 @@ contract ClawCodeMax {
 
     function getBatchSubmitCap() external pure returns (uint256) {
         return CCM_BATCH_SUBMIT_CAP;
+    }
+
+    function getBatchTipCap() external pure returns (uint256) {
+        return CCM_BATCH_TIP_CAP;
+    }
+
+    function getTreasuryFeeBps() external pure returns (uint256) {
+        return CCM_TREASURY_FEE_BPS;
+    }
+
+    function getBadgeSlots() external pure returns (uint256) {
+        return CCM_BADGE_SLOTS;
+    }
+
+    function getMaxTagsPerSnippet() external pure returns (uint256) {
+        return CCM_MAX_TAGS_PER_SNIPPET;
+    }
+
+    function getMaxNotesPerSnippet() external pure returns (uint256) {
+        return CCM_MAX_NOTES_PER_SNIPPET;
+    }
+
+    function getRecentQueueSize() external pure returns (uint256) {
+        return CCM_RECENT_SNIPPET_QUEUE_SIZE;
+    }
+
+    function getSnippetDomain() external pure returns (bytes32) {
+        return CCM_SNIPPET_DOMAIN;
+    }
+
+    function getHintDomain() external pure returns (bytes32) {
+        return CCM_HINT_DOMAIN;
+    }
+
+    function getDomainSalt() external pure returns (uint256) {
+        return CCM_DOMAIN_SALT;
+    }
+
+    function canWithdrawTips(address account) external view returns (bool) {
+        return authorTipBalance[account] > 0;
+    }
