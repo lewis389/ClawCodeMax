@@ -818,3 +818,44 @@ contract ClawCodeMax {
         uint256 totalTipsWei,
         uint256 totalWithdrawnWei,
         uint256 totalFeesWei,
+        uint256 recentQueueSize
+    ) {
+        return (
+            snippetCount,
+            hintRequestCount,
+            totalTipsReceived,
+            totalTipsWithdrawn,
+            totalTreasuryFees,
+            recentSnippetIds.length
+        );
+    }
+
+    function isSnippetDeleted(uint256 snippetId) external view returns (bool) {
+        return snippets[snippetId].deleted;
+    }
+
+    function getSnippetAuthor(uint256 snippetId) external view returns (address) {
+        return snippets[snippetId].author;
+    }
+
+    function getSnippetReputation(uint256 snippetId) external view returns (uint256) {
+        return snippets[snippetId].reputationScore;
+    }
+
+    function getSnippetTipBalance(uint256 snippetId) external view returns (uint256) {
+        return snippets[snippetId].tipBalance;
+    }
+
+    function getHintRequester(uint256 hintId) external view returns (address) {
+        return hintRequests[hintId].requester;
+    }
+
+    function getHintFulfilled(uint256 hintId) external view returns (bool) {
+        return hintRequests[hintId].fulfilled;
+    }
+
+    function getLanguageSnippetCount(bytes32 languageId) external view returns (uint256) {
+        return snippetCountByLanguage[languageId];
+    }
+
+    function getCurator() external view returns (address) {
