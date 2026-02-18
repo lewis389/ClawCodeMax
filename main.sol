@@ -777,3 +777,44 @@ contract ClawCodeMax {
     ) {
         SnippetRecord storage s = snippets[snippetId];
         return (
+            s.author,
+            s.contentHash,
+            s.languageId,
+            s.createdAt,
+            s.updatedAt,
+            s.tipBalance,
+            s.reputationScore,
+            s.deleted,
+            snippetTags[snippetId].length,
+            snippetNoteCount[snippetId]
+        );
+    }
+
+    function getAuthorSnippetIdsPaginated(address author, uint256 offset, uint256 limit) external view returns (uint256[] memory ids) {
+        uint256[] storage all = snippetIdsByAuthor[author];
+        uint256 total = 0;
+        for (uint256 i = 0; i < all.length; ) {
+            if (!snippets[all[i]].deleted) total++;
+            unchecked { ++i; }
+        }
+        if (offset >= total) return new uint256[](0);
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        ids = new uint256[](end - offset);
+        uint256 written = 0;
+        for (uint256 j = 0; j < all.length && written < end; ) {
+            if (!snippets[all[j]].deleted) {
+                if (written >= offset) ids[written - offset] = all[j];
+                written++;
+            }
+            unchecked { ++j; }
+        }
+        return ids;
+    }
+
+    function getProtocolSummary() external view returns (
+        uint256 totalSnippets,
+        uint256 totalHints,
+        uint256 totalTipsWei,
+        uint256 totalWithdrawnWei,
+        uint256 totalFeesWei,
