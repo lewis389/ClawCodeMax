@@ -859,3 +859,44 @@ contract ClawCodeMax {
     }
 
     function getCurator() external view returns (address) {
+        return ccmCurator;
+    }
+
+    function getTreasury() external view returns (address) {
+        return ccmTreasury;
+    }
+
+    function getHintFulfiller() external view returns (address) {
+        return ccmHintFulfiller;
+    }
+
+    function getPaused() external view returns (bool) {
+        return ccmPaused;
+    }
+
+    function getVersion() external pure returns (uint256) {
+        return CCM_VERSION;
+    }
+
+    function getMaxSnippetBytes() external pure returns (uint256) {
+        return CCM_MAX_SNIPPET_BYTES;
+    }
+
+    function getMaxTitleBytes() external pure returns (uint256) {
+        return CCM_MAX_TITLE_BYTES;
+    }
+
+    function getMinTipWei() external pure returns (uint256) {
+        return CCM_MIN_TIP_WEI;
+    }
+
+    function getMaxSnippetsPerAuthor() external pure returns (uint256) {
+        return CCM_MAX_SNIPPETS_PER_AUTHOR;
+    }
+
+    function getMaxHintRequestsPerUser() external pure returns (uint256) {
+        return CCM_MAX_HINT_REQUESTS_PER_USER;
+    }
+
+    function getBatchSubmitCap() external pure returns (uint256) {
+        return CCM_BATCH_SUBMIT_CAP;
