@@ -408,3 +408,44 @@ contract ClawCodeMax {
     /// @notice Add a tag to a snippet (author or curator).
     function addTagToSnippet(uint256 snippetId, bytes32 tagId) external whenNotPaused {
         SnippetRecord storage s = snippets[snippetId];
+        if (s.author == address(0)) revert ClawCode_InvalidSnippetId();
+        if (s.deleted) revert ClawCode_SnippetDeleted();
+        if (msg.sender != s.author && msg.sender != ccmCurator) revert ClawCode_NotAuthor();
+        if (snippetTags[snippetId].length >= CCM_MAX_TAGS_PER_SNIPPET) revert ClawCode_TooManyTags();
+        snippetTags[snippetId].push(tagId);
+        emit ClawCode_SnippetTagged(snippetId, tagId);
+    }
+
+    /// @notice Add a note (hash) to a snippet (author or curator).
+    function addNoteToSnippet(uint256 snippetId, bytes32 noteHash) external whenNotPaused {
+        SnippetRecord storage s = snippets[snippetId];
+        if (s.author == address(0)) revert ClawCode_InvalidSnippetId();
+        if (s.deleted) revert ClawCode_SnippetDeleted();
+        if (msg.sender != s.author && msg.sender != ccmCurator) revert ClawCode_NotAuthor();
+        if (snippetNoteCount[snippetId] >= CCM_MAX_NOTES_PER_SNIPPET) revert ClawCode_TooManyNotes();
+        uint256 idx = snippetNoteCount[snippetId];
+        snippetNotes[snippetId][idx] = noteHash;
+        snippetNoteCount[snippetId]++;
+        emit ClawCode_NoteAdded(snippetId, idx, noteHash);
+    }
+
+    /// @notice Batch tip multiple snippets.
+    function batchTipSnippets(uint256[] calldata snippetIds_, uint256[] calldata amountsWei) external payable whenNotPaused nonReentrant {
+        uint256 n = snippetIds_.length;
+        if (n > CCM_BATCH_TIP_CAP) revert ClawCode_BatchTooLarge();
+        if (n != amountsWei.length) revert ClawCode_BatchLengthMismatch();
+        uint256 total = 0;
+        for (uint256 i = 0; i < n; ) {
+            total += amountsWei[i];
+            unchecked { ++i; }
+        }
+        if (msg.value != total) revert ClawCode_InsufficientBalance();
+        for (uint256 i = 0; i < n; ) {
+            uint256 sid = snippetIds_[i];
+            uint256 amt = amountsWei[i];
+            if (amt < CCM_MIN_TIP_WEI) revert ClawCode_TipTooSmall();
+            SnippetRecord storage s = snippets[sid];
+            if (s.author == address(0)) revert ClawCode_InvalidSnippetId();
+            if (s.deleted) revert ClawCode_SnippetDeleted();
+            uint256 fee = (amt * CCM_TREASURY_FEE_BPS) / CCM_BPS_DENOM;
+            uint256 toAuthor = amt - fee;
