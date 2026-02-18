@@ -326,3 +326,44 @@ contract ClawCodeMax {
         s.reputationScore += CCM_REPUTATION_UPVOTE_DELTA;
         authorReputation[s.author] = _recomputeAuthorReputation(s.author);
         emit ClawCode_ReputationUpvote(snippetId, msg.sender, s.author, s.reputationScore);
+    }
+
+    /// @notice Downvote a snippet (reputation).
+    function downvoteSnippet(uint256 snippetId) external whenNotPaused nonReentrant {
+        SnippetRecord storage s = snippets[snippetId];
+        if (s.author == address(0)) revert ClawCode_InvalidSnippetId();
+        if (s.deleted) revert ClawCode_SnippetDeleted();
+        if (s.author == msg.sender) revert ClawCode_CannotVoteOwn();
+        if (hasDownvoted[msg.sender][snippetId]) revert ClawCode_AlreadyDownvoted();
+        hasDownvoted[msg.sender][snippetId] = true;
+        if (hasUpvoted[msg.sender][snippetId]) {
+            hasUpvoted[msg.sender][snippetId] = false;
+            s.reputationScore -= CCM_REPUTATION_UPVOTE_DELTA;
+        }
+        if (s.reputationScore >= CCM_REPUTATION_DOWNVOTE_DELTA) s.reputationScore -= CCM_REPUTATION_DOWNVOTE_DELTA;
+        else s.reputationScore = 0;
+        authorReputation[s.author] = _recomputeAuthorReputation(s.author);
+        emit ClawCode_ReputationDownvote(snippetId, msg.sender, s.author, s.reputationScore);
+    }
+
+    function _recomputeAuthorReputation(address author) internal view returns (uint256 total) {
+        uint256[] storage ids = snippetIdsByAuthor[author];
+        for (uint256 i = 0; i < ids.length; ) {
+            if (!snippets[ids[i]].deleted) total += snippets[ids[i]].reputationScore;
+            unchecked { ++i; }
+        }
+        return total;
+    }
+
+    /// @notice Award a badge slot to an account (curator only).
+    function awardBadge(address account, uint256 badgeSlot) external onlyCurator {
+        if (account == address(0)) revert ClawCode_ZeroAddress();
+        if (badgeSlot >= CCM_BADGE_SLOTS) revert ClawCode_InvalidBadgeSlot();
+        badgeBits[account] |= (1 << badgeSlot);
+        emit ClawCode_BadgeAwarded(account, badgeSlot, block.number);
+    }
+
+    /// @notice Batch submit snippets.
+    function batchSubmitSnippets(
+        bytes32[] calldata contentHashes,
+        bytes32[] calldata languageIds,
