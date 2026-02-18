@@ -613,3 +613,44 @@ contract ClawCodeMax {
         fulfilleds = new bool[](n);
         for (uint256 i = 0; i < n; ) {
             HintRequest storage h = hintRequests[hintIds[i]];
+            requesters[i] = h.requester;
+            topicHashes[i] = h.topicHash;
+            snippetIds[i] = h.snippetId;
+            createdAts[i] = h.createdAt;
+            fulfilleds[i] = h.fulfilled;
+            unchecked { ++i; }
+        }
+    }
+
+    function getTagsForSnippet(uint256 snippetId) external view returns (bytes32[] memory) {
+        return snippetTags[snippetId];
+    }
+
+    function getRecentSnippetIds() external view returns (uint256[] memory) {
+        return recentSnippetIds;
+    }
+
+    function getRecentSnippetIdsPaginated(uint256 offset, uint256 limit) external view returns (uint256[] memory ids) {
+        uint256 total = recentSnippetIds.length;
+        if (offset >= total) return new uint256[](0);
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        ids = new uint256[](end - offset);
+        for (uint256 i = offset; i < end; ) {
+            ids[i - offset] = recentSnippetIds[i];
+            unchecked { ++i; }
+        }
+    }
+
+    function getSnippetIdsByLanguage(bytes32 languageId) external view returns (uint256[] memory) {
+        uint256 total = snippetCount;
+        uint256 cap = snippetCountByLanguage[languageId];
+        uint256[] memory temp = new uint256[](cap);
+        uint256 k = 0;
+        for (uint256 i = 1; i <= total && k < cap; ) {
+            if (snippets[i].languageId == languageId && !snippets[i].deleted) {
+                temp[k] = i;
+                k++;
+            }
+            unchecked { ++i; }
+        }
