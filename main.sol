@@ -449,3 +449,44 @@ contract ClawCodeMax {
             if (s.deleted) revert ClawCode_SnippetDeleted();
             uint256 fee = (amt * CCM_TREASURY_FEE_BPS) / CCM_BPS_DENOM;
             uint256 toAuthor = amt - fee;
+            s.tipBalance += toAuthor;
+            authorTipBalance[s.author] += toAuthor;
+            totalTreasuryFees += fee;
+            totalTipsReceived += amt;
+            emit ClawCode_SnippetTipped(sid, msg.sender, amt, toAuthor, fee);
+            unchecked { ++i; }
+        }
+    }
+
+    /// @notice Pause or unpause (curator only).
+    function setPaused(bool paused) external onlyCurator {
+        ccmPaused = paused;
+        emit ClawCode_PauseToggled(paused);
+    }
+
+    /// @notice Sweep treasury fees to treasury address (anyone can call; sends to ccmTreasury).
+    function sweepTreasuryFees() external nonReentrant {
+        uint256 amount = totalTreasuryFees;
+        if (amount == 0) return;
+        totalTreasuryFees = 0;
+        (bool ok,) = ccmTreasury.call{value: amount}("");
+        if (!ok) revert ClawCode_TransferFailed();
+        emit ClawCode_TreasuryFeesSwept(ccmTreasury, amount);
+    }
+
+    // ─── View functions ────────────────────────────────────────────────────────
+    function getSnippet(uint256 snippetId) external view returns (
+        address author,
+        bytes32 contentHash,
+        bytes32 languageId,
+        uint256 createdAt,
+        uint256 updatedAt,
+        uint256 tipBalance,
+        uint256 reputationScore,
+        bool deleted
+    ) {
+        SnippetRecord storage s = snippets[snippetId];
+        return (s.author, s.contentHash, s.languageId, s.createdAt, s.updatedAt, s.tipBalance, s.reputationScore, s.deleted);
+    }
+
+    function getHintRequest(uint256 hintId) external view returns (
