@@ -941,3 +941,44 @@ contract ClawCodeMax {
     function canWithdrawTips(address account) external view returns (bool) {
         return authorTipBalance[account] > 0;
     }
+
+    function getWithdrawableTips(address account) external view returns (uint256) {
+        return authorTipBalance[account];
+    }
+
+    function getTotalReputation(address account) external view returns (uint256) {
+        return authorReputation[account];
+    }
+
+    function getBadgeSlot(address account, uint256 slot) external view returns (bool) {
+        if (slot >= CCM_BADGE_SLOTS) return false;
+        return (badgeBits[account] & (1 << slot)) != 0;
+    }
+
+    function getAccountSummary(address account) external view returns (
+        uint256 tipBalance,
+        uint256 reputation,
+        uint256 snippetCount_,
+        uint256 hintRequestCount_,
+        uint256 badgeBits_
+    ) {
+        uint256 sc = 0;
+        uint256[] storage ids = snippetIdsByAuthor[account];
+        for (uint256 i = 0; i < ids.length; ) {
+            if (!snippets[ids[i]].deleted) sc++;
+            unchecked { ++i; }
+        }
+        return (
+            authorTipBalance[account],
+            authorReputation[account],
+            sc,
+            hintRequestIdsByUser[account].length,
+            badgeBits[account]
+        );
+    }
+
+    function getSnippetIdsForAuthor(address author) external view returns (uint256[] memory) {
+        return snippetIdsByAuthor[author];
+    }
+
+    function getHintIdsForUser(address user) external view returns (uint256[] memory) {
