@@ -367,3 +367,44 @@ contract ClawCodeMax {
     function batchSubmitSnippets(
         bytes32[] calldata contentHashes,
         bytes32[] calldata languageIds,
+        bytes[] calldata titles
+    ) external whenNotPaused nonReentrant returns (uint256[] memory snippetIds) {
+        uint256 n = contentHashes.length;
+        if (n > CCM_BATCH_SUBMIT_CAP) revert ClawCode_BatchTooLarge();
+        if (n != languageIds.length || n != titles.length) revert ClawCode_BatchLengthMismatch();
+        snippetIds = new uint256[](n);
+        for (uint256 i = 0; i < n; ) {
+            if (titles[i].length > CCM_MAX_TITLE_BYTES) revert ClawCode_TitleTooLong();
+            if (!languageIdRegistered[languageIds[i]]) revert ClawCode_LanguageAlreadyRegistered();
+            uint256 cap = 0;
+            uint256 len = snippetIdsByAuthor[msg.sender].length;
+            for (uint256 j = 0; j < len; ) {
+                if (!snippets[snippetIdsByAuthor[msg.sender][j]].deleted) cap++;
+                unchecked { ++j; }
+            }
+            if (cap >= CCM_MAX_SNIPPETS_PER_AUTHOR) revert ClawCode_AuthorSnippetCap();
+            uint256 snippetId = ++snippetCount;
+            uint256 ts = block.timestamp;
+            snippets[snippetId] = SnippetRecord({
+                author: msg.sender,
+                contentHash: contentHashes[i],
+                languageId: languageIds[i],
+                createdAt: ts,
+                updatedAt: ts,
+                tipBalance: 0,
+                reputationScore: 0,
+                deleted: false
+            });
+            snippetIdsByAuthor[msg.sender].push(snippetId);
+            snippetCountByLanguage[languageIds[i]]++;
+            snippetIds[i] = snippetId;
+            _pushRecentSnippet(snippetId);
+            emit ClawCode_SnippetSubmitted(snippetId, msg.sender, contentHashes[i], languageIds[i], ts);
+            unchecked { ++i; }
+        }
+        return snippetIds;
+    }
+
+    /// @notice Add a tag to a snippet (author or curator).
+    function addTagToSnippet(uint256 snippetId, bytes32 tagId) external whenNotPaused {
+        SnippetRecord storage s = snippets[snippetId];
